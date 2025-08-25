@@ -43,12 +43,12 @@ class JoyToJointStates(Node):
 
         js.velocity = [0.0] * 5
 
-        if msg.buttons[10] == 1 and self.speed_multiplier < SPEED_MULTIPLIER_MAX and not self.speed_multiplier_changed:
+        if msg.buttons[11] == 1 and self.speed_multiplier < SPEED_MULTIPLIER_MAX and not self.speed_multiplier_changed:
             self.speed_multiplier = self.speed_multiplier + 0.2
             self.speed_multiplier_changed = True
             self.get_logger().info(f'Changed the speed multiplier to {self.speed_multiplier}')
 
-        if msg.buttons[11] == 1 and self.speed_multiplier > SPEED_MULTIPLIER_MIN and not self.speed_multiplier_changed:
+        if msg.buttons[10] == 1 and self.speed_multiplier > SPEED_MULTIPLIER_MIN and not self.speed_multiplier_changed:
             self.speed_multiplier = self.speed_multiplier - 0.2
             self.speed_multiplier_changed = True
             self.get_logger().info(f'Changed the speed multiplier to {self.speed_multiplier}')
