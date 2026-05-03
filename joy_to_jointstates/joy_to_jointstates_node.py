@@ -43,42 +43,43 @@ class JoyToJointStates(Node):
 
         js.velocity = [0.0] * 5
 
-        if msg.buttons[11] == 1 and self.speed_multiplier < SPEED_MULTIPLIER_MAX and not self.speed_multiplier_changed:
+        if msg.buttons[10] == 1 and self.speed_multiplier < SPEED_MULTIPLIER_MAX and not self.speed_multiplier_changed:
             self.speed_multiplier = self.speed_multiplier + 0.2
             self.speed_multiplier_changed = True
             self.get_logger().info(f'Changed the speed multiplier to {self.speed_multiplier}')
 
-        if msg.buttons[10] == 1 and self.speed_multiplier > SPEED_MULTIPLIER_MIN and not self.speed_multiplier_changed:
+        if msg.buttons[9] == 1 and self.speed_multiplier > SPEED_MULTIPLIER_MIN and not self.speed_multiplier_changed:
             self.speed_multiplier = self.speed_multiplier - 0.2
             self.speed_multiplier_changed = True
             self.get_logger().info(f'Changed the speed multiplier to {self.speed_multiplier}')
 
-        if msg.buttons[10] == 0 and msg.buttons[11] == 0:
+        if msg.buttons[10] == 0 and msg.buttons[9] == 0:
             self.speed_multiplier_changed = False
 
         js.velocity[0] = msg.axes[2] * self.max_speeds[0] * self.speed_multiplier
-        js.velocity[1] = -msg.axes[3] * self.max_speeds[1] * self.speed_multiplier
+        js.velocity[1] = msg.axes[3] * self.max_speeds[1] * self.speed_multiplier
         js.velocity[2] = msg.axes[1] * self.max_speeds[2] * self.speed_multiplier
-        js.velocity[3] = msg.axes[4] * self.max_speeds[3] * self.speed_multiplier
-        
-        # Rotation down
-        if msg.axes[5] == -1.0:
-            js.velocity[3] = self.max_speeds[4] * self.speed_multiplier
-            js.velocity[4] = self.max_speeds[4] * self.speed_multiplier
-        
-        # Rotation up
-        if msg.axes[5] == 1.0:
-            js.velocity[3] = -self.max_speeds[4] * self.speed_multiplier
-            js.velocity[4] = -self.max_speeds[4] * self.speed_multiplier
+        js.velocity[3] = msg.axes[6] * self.max_speeds[3] * self.speed_multiplier
+        js.velocity[4] = -msg.axes[5] * self.max_speeds[4] * self.speed_multiplier
 
-        # Rotation left
-        if msg.axes[4] == 1.0:
-            js.velocity[3] = self.max_speeds[3] * self.speed_multiplier
-            js.velocity[4] = -self.max_speeds[3] * self.speed_multiplier
-
-        if msg.axes[4] == -1.0:
-            js.velocity[3] = -self.max_speeds[3] * self.speed_multiplier
-            js.velocity[4] = self.max_speeds[3] * self.speed_multiplier
+        ## Rotation down
+        #if msg.axes[6] == -1.0:
+        #    js.velocity[3] = -self.max_speeds[4] * self.speed_multiplier
+        #    js.velocity[4] = -self.max_speeds[4] * self.speed_multiplier
+        #
+        ## Rotation up
+        #if msg.axes[6] == 1.0:
+        #    js.velocity[3] = self.max_speeds[4] * self.speed_multiplier
+        #    js.velocity[4] = self.max_speeds[4] * self.speed_multiplier
+#
+        ## Rotation left
+        #if msg.axes[5] == 1.0:
+        #    js.velocity[3] = -self.max_speeds[3] * self.speed_multiplier
+        #    js.velocity[4] = self.max_speeds[3] * self.speed_multiplier
+#
+        #if msg.axes[5] == -1.0:
+        #    js.velocity[3] = self.max_speeds[3] * self.speed_multiplier
+        #    js.velocity[4] = -self.max_speeds[3] * self.speed_multiplier
 
         self.get_logger().info(f'Publishing velocities: {js.velocity}')  
         self.pub.publish(js)
