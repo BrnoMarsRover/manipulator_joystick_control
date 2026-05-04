@@ -4,6 +4,7 @@ from sensor_msgs.msg import Joy, JointState
 from std_msgs.msg import Int32
 from geometry_msgs.msg import TwistStamped
 from math import pi
+import numpy as np #Python doesn't have sign() function for some fkin reason 
 
 from manipulator_servo_driver_interfaces.srv import ChangeMode
 
@@ -216,14 +217,13 @@ class JoyToJointStates(Node):
                         if abs(delta) > 1e-3:
                             deltaPos[i] = delta
                         
-                    # Přišel požadavek na pózu, ve které už stojí (+-1° každého kloubu)
                     if all([ delta == 0 for delta in deltaPos]):
                         self.get_logger().info("Arm already in requested position")
                         return
 
                     self.get_logger().info(f"Calculated: {deltaPos}")
 
-                    velocity = [self.max_speeds[i] * self.speed_multiplier for i in range(self.joint_count)]
+                    velocity = [self.max_speeds[i] * self.speed_multiplier * np.sign(deltaPos[i]) for i in range(self.joint_count)]
 
                     joint_msg = JointState()
 
