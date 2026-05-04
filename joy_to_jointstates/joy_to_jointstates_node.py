@@ -3,8 +3,10 @@ from rclpy.node import Node
 from sensor_msgs.msg import Joy, JointState
 from std_msgs.msg import Int32
 from geometry_msgs.msg import TwistStamped
-from math import pi
-import numpy as np #Python doesn't have sign() function for some fkin reason 
+from math import pi, copysign
+#import numpy as np #Python doesn't have sign() function for some fkin reason 
+
+sign = lambda x: copysign(1, x) #Better - doesn't add dependency on numpy, but still WTF
 
 from manipulator_servo_driver_interfaces.srv import ChangeMode
 
@@ -223,7 +225,7 @@ class JoyToJointStates(Node):
 
                     self.get_logger().info(f"Calculated: {deltaPos}")
 
-                    velocity = [self.max_speeds[i] * self.speed_multiplier * np.sign(deltaPos[i]) for i in range(self.joint_count)]
+                    velocity = [self.max_speeds[i] * self.speed_multiplier * sign(deltaPos[i]) for i in range(self.joint_count)]
 
                     joint_msg = JointState()
 
