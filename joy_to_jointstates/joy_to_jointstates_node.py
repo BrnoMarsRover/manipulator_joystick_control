@@ -14,7 +14,7 @@ SPEED_MULTIPLIER_MIN = 0.0
 SPEED_MULTIPLIER_MAX = 1.0
 
 ROTATION_MULTIPLIER = 10 
-LINEAR_MULTIPLIER = 0.1 
+LINEAR_MULTIPLIER = -0.1 
 
 TEST_JOINT_POS = [-0.050633996262358316,
                   0.5370243852290245,
@@ -22,6 +22,24 @@ TEST_JOINT_POS = [-0.050633996262358316,
                   -0.3007336557282536,
                   0.09206132318211835
                   ]
+
+PICKUP_POS = [-0.306871,
+              1.422347,
+              0.955903,
+              -0.198699,
+              0.045647]
+
+STORE_POS = [0.128885,
+            -0.599932,
+            -1.321079,
+            -0.200233,
+            0.045647]
+
+STANDBY_POS = [-0.033756,
+               -1.135422,
+                1.775249,
+                0.635990,
+                0.054086]
 
 GRIPPER_POS_MIN = 10
 GRIPPER_POS_MAX = 100
@@ -166,8 +184,8 @@ class JoyToJointStates(Node):
             js.velocity[0] = msg.axes[2] * self.max_speeds[0] * self.speed_multiplier
             js.velocity[1] = msg.axes[3] * self.max_speeds[1] * self.speed_multiplier
             js.velocity[2] = msg.axes[1] * self.max_speeds[2] * self.speed_multiplier
-            js.velocity[3] = -msg.axes[6] * self.max_speeds[3] * self.speed_multiplier
-            js.velocity[4] = msg.axes[5] * self.max_speeds[4] * self.speed_multiplier
+            js.velocity[3] = msg.axes[6] * self.max_speeds[3] * self.speed_multiplier
+            js.velocity[4] = -msg.axes[5] * self.max_speeds[4] * self.speed_multiplier
             
             self.get_logger().info(f'Publishing velocities: {js.velocity}')  
             self.pub.publish(js)
@@ -187,8 +205,8 @@ class JoyToJointStates(Node):
             twist_st.twist.linear.z = msg.axes[1] * self.speed_multiplier * LINEAR_MULTIPLIER
 
             # Angular velocities
-            twist_st.twist.angular.x = msg.axes[5] * self.max_speeds[4] * self.speed_multiplier * ROTATION_MULTIPLIER
-            twist_st.twist.angular.y = -msg.axes[6] * self.max_speeds[3] * self.speed_multiplier * ROTATION_MULTIPLIER
+            twist_st.twist.angular.x = -msg.axes[5] * self.max_speeds[4] * self.speed_multiplier * ROTATION_MULTIPLIER
+            twist_st.twist.angular.y = msg.axes[6] * self.max_speeds[3] * self.speed_multiplier * ROTATION_MULTIPLIER
             #twist_st.twist.angular.z = msg.axes[2] * self.max_speeds[0] * self.speed_multiplier * ROTATION_MULTIPLIER * 10
 
             # Logging
@@ -209,31 +227,14 @@ class JoyToJointStates(Node):
 
         if self.mode == 2:
             if not self.pos_sent:
-                if msg.axes[6] > 0.1:
+                if msg.axes[6] > 0.2:
+                    self.go_to_pos(PICKUP_POS)
 
-                    deltaPos = [0.0] * self.joint_count
+                elif msg.axes[6] < -0.2:
+                    self.go_to_pos(STORE_POS)
 
-                    #Ignore differences less than 1° 
-                    for i in range(self.joint_count):
-                        delta = TEST_JOINT_POS[i] - self.act_joint_pos_rad[i]
-                        if abs(delta) > 1e-3:
-                            deltaPos[i] = delta
-                        
-                    if all([ delta == 0 for delta in deltaPos]):
-                        self.get_logger().info("Arm already in requested position")
-                        return
-
-                    self.get_logger().info(f"Calculated: {deltaPos}")
-
-                    velocity = [self.max_speeds[i] * self.speed_multiplier * sign(deltaPos[i]) for i in range(self.joint_count)]
-
-                    joint_msg = JointState()
-
-                    joint_msg.position = deltaPos
-                    joint_msg.velocity = velocity 
-
-                    self.set_joints_position_pub.publish(joint_msg)
-                    self.pos_sent = True
+                elif msg.axes[5] > 0.2:
+                    self.go_to_pos(STANDBY_POS)
 
             elif abs(msg.axes[6]) < 0.1:
                self.pos_sent = False
@@ -252,6 +253,29 @@ class JoyToJointStates(Node):
 
     def joint_states_cb(self, msg: JointState):
         self.act_joint_pos_rad = msg.position
+
+    def go_to_pos(self, joint_pos):
+        deltaPos = [0.0] * self.joint_count
+
+        #Ignore differences less than 1° 
+        for i in range(self.joint_count):
+            delta = joint_pos[i] - self.act_joint_pos_rad[i]
+            if abs(delta) > (1*pi/180):
+                deltaPos[i] = delta
+            
+        if all([ delta == 0 for delta in deltaPos]):
+            self.get_logger().info("Arm already in requested position")
+            return
+        self.get_logger().info(f"Calculated: {deltaPos}")
+
+        velocity = [self.max_speeds[i] * self.speed_multiplier for i in range(self.joint_count)]
+
+        joint_msg = JointState()
+        joint_msg.position = deltaPos
+        joint_msg.velocity = velocity
+        self.set_joints_position_pub.publish(joint_msg)
+        self.get_logger().info(f"Going to position")
+        self.pos_sent = True
 
 def main(args=None):
     rclpy.init(args=args)
