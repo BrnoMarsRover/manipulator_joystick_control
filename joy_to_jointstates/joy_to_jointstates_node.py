@@ -1,13 +1,13 @@
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Joy, JointState
-from std_msgs.msg import Int32
+from std_msgs.msg import Float32
 
 SPEED_MULTIPLIER_MIN = 0.0
 SPEED_MULTIPLIER_MAX = 1.0
 
-GRIPPER_POS_MIN = 10
-GRIPPER_POS_MAX = 100
+GRIPPER_POS_MIN = 0.0
+GRIPPER_POS_MAX = 1.0
 
 class JoyToJointStates(Node):
     def __init__(self):
@@ -24,15 +24,15 @@ class JoyToJointStates(Node):
 
         self.sub = self.create_subscription(Joy, joy_topic, self.cb, 1)
         self.pub = self.create_publisher(JointState, joint_states_topic, 1)
-        self.gripper_pub = self.create_publisher(Int32, gripper_position_topic, 1)
-        self.names = [f'joint_{i+1}' for i in range(5)]
+        self.gripper_pub = self.create_publisher(Float32, gripper_position_topic, 1)
+        self.names = [f'_Kloub{i}_joint' for i in range(5)]
 
         self.speed_multiplier = 0.2
         self.speed_multiplier_changed = False
 
-        self.current_gripper_pos = 10
+        self.current_gripper_pos = 0.1
 
-        syncmsg = Int32()
+        syncmsg = Float32()
         syncmsg.data = self.current_gripper_pos
         self.gripper_pub.publish(syncmsg)
 
@@ -84,12 +84,14 @@ class JoyToJointStates(Node):
         self.pub.publish(js)
 
         if self.current_gripper_pos < GRIPPER_POS_MAX:
-            self.current_gripper_pos = self.current_gripper_pos + msg.buttons[6]
+            self.current_gripper_pos = self.current_gripper_pos + msg.buttons[6] / 10.0
 
         if self.current_gripper_pos > GRIPPER_POS_MIN:
-            self.current_gripper_pos = self.current_gripper_pos - msg.buttons[7]
+            self.current_gripper_pos = self.current_gripper_pos - msg.buttons[7] / 10.0
 
-        gripperpos_msg = Int32()
+        self.get_logger().info(f'Setting gripper to position: {self.current_gripper_pos}')
+
+        gripperpos_msg = Float32()
         gripperpos_msg.data = self.current_gripper_pos
         self.gripper_pub.publish(gripperpos_msg)
 

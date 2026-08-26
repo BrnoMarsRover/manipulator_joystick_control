@@ -15,10 +15,10 @@ def generate_launch_description():
             executable='joy_to_jointstates',
             name='joy_to_jointstates',
             parameters=[{
-                'max_speeds': [0.2, 2.0, 3.0, 0.2, 0.2],   # scale factors for each axis
+                'max_speeds': [2.0, 2.0, 2.0, 2.0, 2.0],   # scale factors for each axis
                 'joy_topic': '/freya_1/chassis/manipulator/joy',
-                'joint_states_topic': '/manipulator/set_joints_velocity',
-                'gripper_position_topic': '/freya_1/chassis/gripper/cmd_pos'
+                'joint_states_topic': '/freya_1/manipulator_driver/cubemars_node/command',
+                'gripper_position_topic': '/st3215_gripper/command'
             }]
         )
     ])
