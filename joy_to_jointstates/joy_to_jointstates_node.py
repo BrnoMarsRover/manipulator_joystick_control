@@ -4,11 +4,10 @@ from sensor_msgs.msg import Joy, JointState
 from std_msgs.msg import Float32
 from geometry_msgs.msg import TwistStamped
 from math import pi, copysign
+from std_srvs.srv import Trigger
 #import numpy as np #Python doesn't have sign() function for some fkin reason 
 
 sign = lambda x: copysign(1, x) #Better - doesn't add dependency on numpy, but still WTF
-
-from manipulator_servo_driver_interfaces.srv import ChangeMode
 
 from ament_index_python.packages import get_package_share_directory
 import os
@@ -21,31 +20,6 @@ SPEED_MULTIPLIER_MAX = 1.0
 
 ROTATION_MULTIPLIER = 2.5
 LINEAR_MULTIPLIER = 0.25
-
-TEST_JOINT_POS = [-0.050633996262358316,
-                  0.5370243852290245,
-                  1.018811976548778,
-                  -0.3007336557282536,
-                  0.09206132318211835
-                  ]
-
-PICKUP_POS = [-0.306871,
-              1.422347,
-              0.955903,
-              -0.198699,
-              0.045647]
-
-STORE_POS = [0.128885,
-            -0.599932,
-            -1.321079,
-            -0.200233,
-            0.045647]
-
-STANDBY_POS = [-0.033756,
-               -1.135422,
-                1.775249,
-                0.635990,
-                0.054086]
 
 GRIPPER_POS_MIN = 0.0
 GRIPPER_POS_MAX = 1.0
@@ -77,11 +51,9 @@ class JoyToJointStates(Node):
         self.pub = self.create_publisher(JointState, set_joint_velocity_topic, 1)
         self.gripper_pub = self.create_publisher(Float32, gripper_position_topic, 1)
         self.ik_vel_pub = self.create_publisher(TwistStamped, ik_vel_topic, 1)
-        self.joint_states_sub = self.create_subscription(JointState, joint_states_topic, self.joint_states_cb, 1)
         self.set_joints_position_pub = self.create_publisher(JointState, set_joints_position_topic, 1)
 
-        self.change_mode_client = self.create_client(ChangeMode, "manipulator/change_mode")
-
+        self.zero_wrist_service = self.create_client(Trigger, "/freya_1/manipulator/kinematics/zero_wrist")
 
         self.act_joint_pos_rad = [0.0] * self.joint_count
 
@@ -104,12 +76,6 @@ class JoyToJointStates(Node):
         # 1 - position
         # 2 - velocity
         self.joint_mode = 2
-
-        # Make sure joint mode is set to default (velocity)
-        req = ChangeMode.Request()
-        req.mode = 2
-
-        self.change_mode_client.call_async(req)
 
         
         syncmsg = Float32()
@@ -260,33 +226,10 @@ class JoyToJointStates(Node):
         gripperpos_msg.data = self.current_gripper_pos
         self.gripper_pub.publish(gripperpos_msg)
 
-
-    def joint_states_cb(self, msg: JointState):
-        self.act_joint_pos_rad = msg.position
-
-    def go_to_pos(self, joint_pos):
-        deltaPos = [0.0] * self.joint_count
-
-        #Ignore differences less than 1° 
-        for i in range(self.joint_count):
-            delta = joint_pos[i] - self.act_joint_pos_rad[i]
-            if abs(delta) > (1*pi/180):
-                deltaPos[i] = delta
-            
-        if all([ delta == 0 for delta in deltaPos]):
-            self.get_logger().info("Arm already in requested position")
-            return
-        self.get_logger().info(f"Calculated: {deltaPos}")
-
-        velocity = [self.max_speeds[i] * self.speed_multiplier for i in range(self.joint_count)]
-
-        joint_msg = JointState()
-        joint_msg.name = self.joint_names
-        joint_msg.position = deltaPos
-        joint_msg.velocity = velocity
-        self.set_joints_position_pub.publish(joint_msg)
-        self.get_logger().info(f"Going to position")
-        self.pos_sent = True
+        # Zero wrist service call
+        if msg.buttons[9] == 1:
+            self.zero_wrist_service.call_async(Trigger.Request())
+            self.get_logger().info("Zero wrist service called")
 
     def getUrdf(self):
         self.get_logger().info("Probíhá generování kinematického řetězce")
