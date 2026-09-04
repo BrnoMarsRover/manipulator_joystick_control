@@ -20,7 +20,7 @@ setup(
     maintainer_email='stanislav.svediroh@vut.cz',
     description='Package to convert joy msg to manipulator jointstates',
     license='MIT',
-    tests_require=['pytest'],
+    #tests_require=['pytest'],
     entry_points={
         'console_scripts': [
             'joy_to_jointstates = joy_to_jointstates.joy_to_jointstates_node:main'

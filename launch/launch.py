@@ -8,6 +8,8 @@ def generate_launch_description():
             executable='joy_node',
             name='joy_node',
             output='screen',
+            parameters=[{'autorepeat_rate': 150.0,
+                        'coalesce_interval_ms': 0}],
             remappings=[('joy', '/manipulator/joy')]
         ),
         Node(
@@ -17,9 +19,10 @@ def generate_launch_description():
             parameters=[{
                 'max_speeds': [0.5, 0.5, 0.5, 0.5, 0.5],   # scale factors for each axis
                 'joy_topic': '/manipulator/joy',
-                'set_joints_velocity_topic': '/manipulator/set_joints_velocity',
-                'gripper_position_topic': '/gripper/cmd_pos',
+                'ik_vel_topic': '/freya_1/manipulator/kinematics/set_velocity',
+                'gripper_position_topic': '/st3215_gripper/command',
                 #'joint_states_topic': 'joint_states'
+                'set_joints_velocity_topic': '/freya_1/manipulator_driver/cubemars_node/command'
             }]
         )
     ])
