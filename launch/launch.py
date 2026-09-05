@@ -20,7 +20,7 @@ def generate_launch_description():
                 'max_speeds': [0.5, 0.5, 0.5, 0.5, 0.5],   # scale factors for each axis
                 'joy_topic': '/manipulator/joy',
                 'ik_vel_topic': '/freya_1/manipulator/kinematics/set_velocity',
-                'gripper_position_topic': '/st3215_gripper/command',
+                'gripper_position_topic': '/freya_1/manipulator_driver/st3215_gripper/command',
                 #'joint_states_topic': 'joint_states'
                 'set_joints_velocity_topic': '/freya_1/manipulator_driver/cubemars_node/command'
             }]

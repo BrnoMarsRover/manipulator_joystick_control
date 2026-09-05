@@ -20,6 +20,7 @@ SPEED_MULTIPLIER_MAX = 1.0
 
 ROTATION_MULTIPLIER = 2.5
 LINEAR_MULTIPLIER = 0.25
+GRIPPER_SCALE_MULTIPLIER = 0.005
 
 GRIPPER_POS_MIN = 0.0
 GRIPPER_POS_MAX = 1.0
@@ -217,10 +218,10 @@ class JoyToJointStates(Node):
 
         # Gripper control
         if self.current_gripper_pos < GRIPPER_POS_MAX:
-            self.current_gripper_pos = self.current_gripper_pos + msg.buttons[6]
+            self.current_gripper_pos = self.current_gripper_pos + msg.buttons[6] * GRIPPER_SCALE_MULTIPLIER
 
         if self.current_gripper_pos > GRIPPER_POS_MIN:
-            self.current_gripper_pos = self.current_gripper_pos - msg.buttons[7]
+            self.current_gripper_pos = self.current_gripper_pos - msg.buttons[7] * GRIPPER_SCALE_MULTIPLIER
 
         gripperpos_msg = Float32()
         gripperpos_msg.data = self.current_gripper_pos
